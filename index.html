@@ -371,28 +371,46 @@ html[lang=ta] *{font-family:'Noto Sans Tamil','DM Sans',system-ui,sans-serif!imp
 .flash2{animation:fl2 1.6s}@keyframes fl2{30%{box-shadow:0 0 0 4px var(--a)}}
 @media(max-width:900px){.sb{width:100%}.tb{position:static}.tb .dt{display:none}main{padding:14px}}
 </style><style id="sbmin-css">
-.sb{transition:width .22s ease,padding .22s ease}
-#sbt{display:none;position:fixed;top:92px;left:239px;z-index:45;width:26px;height:26px;border-radius:50%;border:1px solid rgba(0,0,0,.18);background:#fff;color:#1b1830;font:700 15px/1 system-ui,sans-serif;cursor:pointer;place-items:center;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.22);transition:left .22s ease,transform .15s ease}
-#sbt:hover{transform:scale(1.12)}
+/* ---- sidebar: pinned open / pinned collapsed / hover-peek ---- */
+.sb{transition:width .24s var(--ease),padding .24s var(--ease),box-shadow .24s ease}
+.sb a,.sb h2{white-space:nowrap}
+
+/* edge handle (like ChatGPT / Claude): fades in when the cursor is near the sidebar */
+#sbt{display:none;position:fixed;top:50%;left:238px;margin-top:-14px;z-index:45;width:28px;height:28px;border-radius:9px;border:1px solid var(--l);background:var(--c);color:var(--m);padding:0;place-items:center;box-shadow:var(--sh);cursor:pointer;opacity:0;transform:translateX(-4px) scale(.92);transition:left .24s var(--ease),opacity .18s ease,transform .18s var(--ease),color .15s,border-color .15s,background .15s}
+#sbt svg{width:16px;height:16px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#sbt .f{fill:currentColor;stroke:none;opacity:.28;transition:opacity .2s}
+body.sbmin #sbt .f{opacity:0}
+body.sbmin:not(.sbpeek) #sbt{left:62px}
 body.hassb #sbt{display:grid}
-body.sbmin #sbt{left:63px}
-[data-th=dark] #sbt{background:#2a2523;color:#fff;border-color:rgba(255,255,255,.2)}
+body.sbnear #sbt,#sbt:hover,#sbt:focus-visible{opacity:1;transform:none}
+#sbt:hover{color:var(--a);border-color:var(--a)}
+@media(hover:none){#sbt{opacity:1;transform:none}}
+body:has(.modal,.pal,.tr) #sbt{display:none!important}
 @media(max-width:900px){#sbt{display:none!important}}
+
 @media(min-width:901px){
-body.sbmin .sb{width:76px;padding:16px 8px}
-body.sbmin .sb h2.brand{height:54px;padding:0;margin:2px 0 14px;background:#fff url(assets/icon-64.png) center/36px no-repeat;border-radius:14px}
-body.sbmin .sb h2.brand *{display:none}
-body.sbmin .sb a{position:relative;justify-content:center;padding:6px 0;gap:0}
-body.sbmin .sb a:hover{padding-left:0}
-body.sbmin .sb a .nl{display:none}
-body.sbmin .sb a .nb{position:absolute;top:0;right:4px;font-size:10px;padding:0 5px;line-height:15px}
-body.sbmin .sb .me{padding:8px 4px;font-size:0}
-body.sbmin .sb .me b{display:none}
-body.sbmin .sb .me .row{flex-direction:column;gap:6px;margin-top:0!important}
-body.sbmin .sb .me button{width:100%;padding:7px 0;font-size:13px}
-body.sbmin .sb .me button[data-i]{font-size:0}
-body.sbmin .sb .me button[data-i]::before{content:attr(data-i);font-size:14px}
+  /* sidebar floats above the page so peeking never reflows the content */
+  .sb{position:fixed;left:0;top:0;z-index:8;overflow:hidden}
+  .sb ~ main{margin-left:252px;transition:margin-left .24s var(--ease)}
+  body.sbmin .sb ~ main{margin-left:76px}
+  body.sbmin.sbpeek .sb{box-shadow:14px 0 44px -10px rgba(0,0,0,.5)}
+
+  /* icon-only look (only when collapsed and NOT peeking) */
+  body.sbmin:not(.sbpeek) .sb{width:76px;padding:16px 8px}
+  body.sbmin:not(.sbpeek) .sb h2.brand{height:54px;padding:0;margin:2px 0 14px;background:#fff url(assets/icon-64.png) center/36px no-repeat;border-radius:14px}
+  body.sbmin:not(.sbpeek) .sb h2.brand *{display:none}
+  body.sbmin:not(.sbpeek) .sb a{position:relative;justify-content:center;padding:6px 0;gap:0}
+  body.sbmin:not(.sbpeek) .sb a:hover{padding-left:0}
+  body.sbmin:not(.sbpeek) .sb a .nl{display:none}
+  body.sbmin:not(.sbpeek) .sb a .nb{position:absolute;top:0;right:4px;font-size:10px;padding:0 5px;line-height:15px}
+  body.sbmin:not(.sbpeek) .sb .me{padding:8px 4px;font-size:0}
+  body.sbmin:not(.sbpeek) .sb .me b{display:none}
+  body.sbmin:not(.sbpeek) .sb .me .row{flex-direction:column;gap:6px;margin-top:0!important}
+  body.sbmin:not(.sbpeek) .sb .me button{width:100%;padding:7px 0;font-size:13px}
+  body.sbmin:not(.sbpeek) .sb .me button[data-i]{font-size:0}
+  body.sbmin:not(.sbpeek) .sb .me button[data-i]::before{content:attr(data-i);font-size:14px}
 }
+@media(prefers-reduced-motion:reduce){.sb,.sb ~ main,#sbt{transition:none!important}}
 </style>
 </head>
 <body><div id="splash" aria-hidden="true"><img class="sg" src="assets/bun-bite.gif" alt=""><img class="sl" src="assets/logo.png" alt=""></div><div id="app"></div><div id="toast"></div>
@@ -952,16 +970,48 @@ const op9=P.off;P.off=()=>op9().replace('onclick="cbAdd()"','onclick="cbOpen()"'
 draw();
 </script>
 <script>
-/* sidebar collapse */
+/* sidebar collapse + hover-peek */
 (function(){
-  try{if(localStorage.getItem("bb_sb")==="1")document.body.classList.add("sbmin")}catch(e){}
-  const b=document.createElement("button");b.id="sbt";b.type="button";document.body.appendChild(b);
-  const sync=()=>{const m=document.body.classList.contains("sbmin");b.textContent=m?"›":"‹";b.title=m?"Expand menu (Ctrl+B)":"Collapse menu (Ctrl+B)";b.setAttribute("aria-label",b.title);b.setAttribute("aria-expanded",String(!m))};
-  window.sbToggle=()=>{const m=document.body.classList.toggle("sbmin");try{localStorage.setItem("bb_sb",m?"1":"0")}catch(e){}sync()};
+  const B=document.body,COL=76,EXP=252,NEAR=18,LEAVE=EXP+30,mq=matchMedia("(min-width:901px)");
+  try{if(localStorage.getItem("bb_sb")==="1")B.classList.add("sbmin")}catch(e){}
+  const b=document.createElement("button");b.id="sbt";b.type="button";
+  b.innerHTML='<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.8" y="2.8" width="12.4" height="10.4" rx="2.4"/><path d="M6 2.8v10.4"/><rect class="f" x="2.6" y="3.6" width="3" height="8.8" rx="1.2"/></svg>';
+  document.body.appendChild(b);
+  const pinned=()=>B.classList.contains("sbmin"),peeking=()=>B.classList.contains("sbpeek");
+  const sync=()=>{const m=pinned();b.title=m?"Expand menu (Ctrl+B)":"Collapse menu (Ctrl+B)";b.setAttribute("aria-label",b.title);b.setAttribute("aria-expanded",String(!m))};
+  window.sbToggle=()=>{const m=B.classList.toggle("sbmin");B.classList.remove("sbpeek");try{localStorage.setItem("bb_sb",m?"1":"0")}catch(e){}sync()};
   b.onclick=sbToggle;sync();
-  addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==="b"&&document.body.classList.contains("hassb")){e.preventDefault();sbToggle()}});
+  addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==="b"&&B.classList.contains("hassb")){e.preventDefault();sbToggle()}});
+
+  /* hover-peek: collapsed sidebar opens when the cursor gets close, closes when it leaves */
+  let tO=0,tC=0;
+  const blocked=()=>!B.classList.contains("hassb")||!mq.matches||!!document.querySelector(".modal,.pal,.tr");
+  const clr=()=>{clearTimeout(tO);clearTimeout(tC);tO=tC=0};
+  const setPeek=on=>{if(on!==peeking()){B.classList.toggle("sbpeek",on)}};
+  addEventListener("pointermove",e=>{
+    if(e.pointerType&&e.pointerType!=="mouse")return;
+    const x=e.clientX;
+    if(blocked()){clr();setPeek(false);B.classList.remove("sbnear");return}
+    const w=(!pinned()||peeking())?EXP:COL;
+    B.classList.toggle("sbnear",x<=w+40);
+    if(!pinned()){clr();return}
+    if(!peeking()){
+      clearTimeout(tC);tC=0;
+      if(x<=COL+NEAR&&!e.buttons){if(!tO)tO=setTimeout(()=>{tO=0;if(!blocked())setPeek(true)},90)}
+      else{clearTimeout(tO);tO=0}
+    }else{
+      clearTimeout(tO);tO=0;
+      if(x>LEAVE){if(!tC)tC=setTimeout(()=>{tC=0;setPeek(false)},160)}
+      else{clearTimeout(tC);tC=0}
+    }
+  },{passive:true});
+  document.documentElement.addEventListener("mouseleave",()=>{clr();setPeek(false);B.classList.remove("sbnear")});
+  /* keyboard: tabbing into the collapsed sidebar opens it too */
+  document.addEventListener("focusin",e=>{const t=e.target;if(pinned()&&!blocked()&&t.closest&&t.closest(".sb")&&t.matches(":focus-visible"))setPeek(true)});
+  document.addEventListener("focusout",e=>{if(peeking()&&e.target.closest&&e.target.closest(".sb")&&!(e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest(".sb")))setPeek(false)});
+
   const ico={"Close day":"🔒","Log out":"⏻"};
-  const after=()=>{document.body.classList.toggle("hassb",!!U);
+  const after=()=>{B.classList.toggle("hassb",!!U);
     document.querySelectorAll("#nv a").forEach(a=>{const l=a.querySelector(".nl");if(l)a.title=l.textContent});
     document.querySelectorAll(".sb .me button").forEach(x=>{const t=x.textContent.replace(/^[^\p{L}]+/u,"").trim();if(ico[t]){x.dataset.i=ico[t];x.title=t}})};
   const _d=draw;draw=function(){const r=_d.apply(this,arguments);try{after()}catch(e){}return r};
