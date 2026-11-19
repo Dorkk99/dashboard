@@ -118,11 +118,14 @@
       if (v !== undefined) out[k] = v;
     });
     /* two devices may have issued the same order number: renumber the one created on this device */
+    /* order numbers restart every business day, so collisions are checked per day */
     if (Array.isArray(out.orders) && Array.isArray(r.orders)) {
-      var rid = {}, rno = {};
-      r.orders.forEach(function (o) { rid[o.id] = 1; rno[o.no] = 1; });
-      out.seq = Math.max(+out.seq || 1, 1 + Math.max.apply(null, [0].concat(out.orders.map(function (o) { return +o.no || 0; }))));
-      out.orders.forEach(function (o) { if (!rid[o.id] && rno[o.no]) { o.no = out.seq++; } });
+      var dkf = (typeof dk === "function") ? dk : function (t) { return new Date(t).toDateString(); };
+      var rid = {}, taken = {}, mx = {};
+      r.orders.forEach(function (o) { rid[o.id] = 1; var k = dkf(o.t); (taken[k] = taken[k] || {})[o.no] = 1; });
+      out.orders.forEach(function (o) { var k = dkf(o.t); mx[k] = Math.max(mx[k] || 0, +o.no || 0); });
+      out.orders.forEach(function (o) { if (!rid[o.id]) { var k = dkf(o.t); if (taken[k] && taken[k][o.no]) { mx[k]++; o.no = mx[k]; } } });
+      out.seq = Math.max(+out.seq || 1, out.orders.length + 1);
     }
     return out;
   }
@@ -177,7 +180,7 @@
   /* ---------- shared audit log ---------- */
   function event(type, text, data) {
     q.push({
-      device: DEV, username: (typeof U !== "undefined" && U) ? U.name : "", role: (typeof U !== "undefined" && U) ? U.role : "",
+      device: DEV, username: (data && data.u) ? data.u : ((typeof U !== "undefined" && U) ? U.name : ""), role: (typeof U !== "undefined" && U) ? U.role : "",
       type: type, what: String(text || "").slice(0, 300), details: data ? JSON.stringify(data).slice(0, 1800) : "",
       page: typeof pg === "string" ? pg : "", _t: Date.now()
     });
@@ -194,11 +197,32 @@
     } catch (e) { q = inflight.concat(q); inflight = []; clearTimeout(evT); evT = setTimeout(sendEvents, 8000); }
     finally { evBusy = false; if (q.length && !evT) evT = setTimeout(sendEvents, 800); }
   }
+  var logRows = [], logMax = 0;
+  function toRow(x) {
+    var k = ""; try { var d = x.details ? JSON.parse(x.details) : null; if (d && d.k) k = d.k; } catch (e) {}
+    return { id: x.id, t: new Date(x.created_at).getTime(), u: x.username || "-", a: x.what, k: k };
+  }
   async function loadLog(id) {
-    var r = await ok(await api("audit_log?type=eq.action&select=id,created_at,username,what&order=id.desc&limit=1500"));
-    var rows = (await r.json()).reverse().map(function (x) { return { t: new Date(x.created_at).getTime(), u: x.username || "-", a: x.what }; });
-    var pend = inflight.concat(q).filter(function (e) { return e.type === "action"; }).map(function (e) { return { t: e._t, u: e.username || "-", a: e.what }; });
-    S.log = rows.concat(pend); lastLogId = id;
+    var SEL = "audit_log?type=eq.action&select=id,created_at,username,what,details&order=id.", PAGE = 1000, got, i;
+    if (!logMax) {                                           // first load: newest 10,000 entries, in pages
+      var all = [];
+      for (i = 0; i < 10; i++) {
+        var r = await ok(await api(SEL + "desc&limit=" + PAGE + "&offset=" + (i * PAGE))); got = await r.json();
+        all = all.concat(got); if (got.length < PAGE) break;
+      }
+      logRows = all.reverse().map(toRow);
+    } else {                                                 // later: only rows newer than what we already have
+      for (i = 0; i < 20; i++) {
+        var r2 = await ok(await api(SEL + "asc&limit=" + PAGE + "&id=gt." + logMax)); got = await r2.json();
+        logRows = logRows.concat(got.map(toRow)); if (got.length) logMax = got[got.length - 1].id; if (got.length < PAGE) break;
+      }
+    }
+    if (logRows.length) logMax = Math.max(logMax, logRows[logRows.length - 1].id || 0);
+    var pend = inflight.concat(q).filter(function (e) { return e.type === "action"; }).map(function (e) {
+      var k = ""; try { var d = e.details ? JSON.parse(e.details) : null; if (d && d.k) k = d.k; } catch (x) {}
+      return { t: e._t, u: e.username || "-", a: e.what, k: k };
+    });
+    S.log = logRows.concat(pend); lastLogId = id;
     if (pg === "aud" || pg === "rpt") redraw();
   }
   async function pollLog() {

@@ -4,6 +4,19 @@ A point of sale and shop dashboard for Bun Bun. It runs entirely in the browser:
 
 **Open it locally:** double click `index.html`.
 
+## What is new in v4
+- **Sidebar**: a small handle on the sidebar edge collapses or pins it (Ctrl + B). When it is collapsed, moving the mouse near it opens it as an overlay and it closes again when you move away.
+- **Roles & permissions** (Staff & settings): Owner, Manager, Receptionist / Cashier and Cook come ready made. Tap 🛡 Permissions to switch pages and actions on or off, copy from another role, or make your own role. Owner always has everything. Cancel, refund and discount ask for a reason, and if the person's role cannot do it, a manager or owner PIN approves it.
+- **Audit log**: records logins, failed logins, logouts, orders, status changes, cancellations and refunds (with reasons and who approved), expenses, menu, stock, customers, users, PIN changes, permission changes, settings and day closes. It filters by day, person and type, searches, and exports to Excel. It keeps the latest 8,000 entries on a device; with cloud sync on, every entry is also stored in Supabase (insert-only, so nothing can be edited or deleted from the app).
+- **Daily order numbers**: numbers restart at #1 every business day. The business day starts at 4:00 AM by default (change it in Staff & settings), so a 12:30 AM order still counts toward the evening before. The dashboard, reports and day close all use the same day. Existing orders were renumbered per day once.
+- **Orders > History and Summary**: look back at Today, Yesterday, Day before yesterday, Last 7 or 30 days, a single date or a date range. The summary shows most sold item, highest earning item, most expensive order, busiest hour, famous items, least sold items, items never bought, payment and order types.
+- **Close day**: downloads the Excel report and a backup file, then opens WhatsApp with the summary already typed for the owner number(s) saved in Staff & settings. Press send. More than one number is fine: the first opens automatically and the rest get a button. WhatsApp links can only carry text, so attach the Excel by hand; on phones a share button also appears.
+- **Menu**: cost and profit margin, Best seller and Slow badges, bulk price change, duplicate, archive, search. For add-ons make a category called Add-ons.
+- **Kitchen**: cards turn amber and red as orders wait (10 and 20 minutes by default), and a sound plays when a new order arrives from another device.
+- **Safety**: default PINs (1111, 2222) must be changed at first login. Wrong PINs still lock the screen for 60 seconds after 5 tries, and the app still logs out after 10 idle minutes.
+
+Upgrading: upload every file in this folder (including `sync.js`) and press Ctrl + F5. No change to `supabase-setup.sql` is needed.
+
 ## What is in this folder
 - `index.html`: the whole app
 - `config.js`: settings (the remote activity log address goes here)
