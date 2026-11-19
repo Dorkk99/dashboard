@@ -370,7 +370,31 @@ html[lang=ta] *{font-family:'Noto Sans Tamil','DM Sans',system-ui,sans-serif!imp
 .rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}.rg button{padding:12px;text-align:left}.rg button.on{border-color:var(--a);background:var(--a2);color:var(--a);font-weight:700}
 .flash2{animation:fl2 1.6s}@keyframes fl2{30%{box-shadow:0 0 0 4px var(--a)}}
 @media(max-width:900px){.sb{width:100%}.tb{position:static}.tb .dt{display:none}main{padding:14px}}
-</style></head>
+</style><style id="sbmin-css">
+.sb{transition:width .22s ease,padding .22s ease}
+#sbt{display:none;position:fixed;top:92px;left:239px;z-index:45;width:26px;height:26px;border-radius:50%;border:1px solid rgba(0,0,0,.18);background:#fff;color:#1b1830;font:700 15px/1 system-ui,sans-serif;cursor:pointer;place-items:center;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.22);transition:left .22s ease,transform .15s ease}
+#sbt:hover{transform:scale(1.12)}
+body.hassb #sbt{display:grid}
+body.sbmin #sbt{left:63px}
+[data-th=dark] #sbt{background:#2a2523;color:#fff;border-color:rgba(255,255,255,.2)}
+@media(max-width:900px){#sbt{display:none!important}}
+@media(min-width:901px){
+body.sbmin .sb{width:76px;padding:16px 8px}
+body.sbmin .sb h2.brand{height:54px;padding:0;margin:2px 0 14px;background:#fff url(assets/icon-64.png) center/36px no-repeat;border-radius:14px}
+body.sbmin .sb h2.brand *{display:none}
+body.sbmin .sb a{position:relative;justify-content:center;padding:6px 0;gap:0}
+body.sbmin .sb a:hover{padding-left:0}
+body.sbmin .sb a .nl{display:none}
+body.sbmin .sb a .nb{position:absolute;top:0;right:4px;font-size:10px;padding:0 5px;line-height:15px}
+body.sbmin .sb .me{padding:8px 4px;font-size:0}
+body.sbmin .sb .me b{display:none}
+body.sbmin .sb .me .row{flex-direction:column;gap:6px;margin-top:0!important}
+body.sbmin .sb .me button{width:100%;padding:7px 0;font-size:13px}
+body.sbmin .sb .me button[data-i]{font-size:0}
+body.sbmin .sb .me button[data-i]::before{content:attr(data-i);font-size:14px}
+}
+</style>
+</head>
 <body><div id="splash" aria-hidden="true"><img class="sg" src="assets/bun-bite.gif" alt=""><img class="sl" src="assets/logo.png" alt=""></div><div id="app"></div><div id="toast"></div>
 <script src="config.js"></script>
 <script src="sync-config.js?v=3"></script>
@@ -926,6 +950,23 @@ const os4=P.set;P.set=()=>os4().replace(/<div class="card"><h3>📗 Excel report
 +`<div class="card" data-sec="act"><h3>📡 Remote activity log</h3><p class="hint">Records what people do in this demo (logins, orders, price changes, errors) into your own Google Sheet, from any device. ${logUrl()?"<b>Connected ✅</b>":"Not connected yet."}</p><div class="row"><input id="lgu" placeholder="Paste your Apps Script web app URL" value="${esc((()=>{try{return localStorage.getItem("bb_logurl")||""}catch(e){return""}})())}" style="flex:1;min-width:240px"><button onclick="setLogUrl()">Save on this device</button><button onclick="remote('test','Test event from settings');toast('Test event sent')">Send test event</button></div><p class="hint tiny">Requests sent from this device: ${RL.ok}${RL.last?" · last at "+RL.last:""}. To record every visitor's device, put the URL in config.js (see README).</p></div>`;
 const op9=P.off;P.off=()=>op9().replace('onclick="cbAdd()"','onclick="cbOpen()"');
 draw();
+</script>
+<script>
+/* sidebar collapse */
+(function(){
+  try{if(localStorage.getItem("bb_sb")==="1")document.body.classList.add("sbmin")}catch(e){}
+  const b=document.createElement("button");b.id="sbt";b.type="button";document.body.appendChild(b);
+  const sync=()=>{const m=document.body.classList.contains("sbmin");b.textContent=m?"›":"‹";b.title=m?"Expand menu (Ctrl+B)":"Collapse menu (Ctrl+B)";b.setAttribute("aria-label",b.title);b.setAttribute("aria-expanded",String(!m))};
+  window.sbToggle=()=>{const m=document.body.classList.toggle("sbmin");try{localStorage.setItem("bb_sb",m?"1":"0")}catch(e){}sync()};
+  b.onclick=sbToggle;sync();
+  addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==="b"&&document.body.classList.contains("hassb")){e.preventDefault();sbToggle()}});
+  const ico={"Close day":"🔒","Log out":"⏻"};
+  const after=()=>{document.body.classList.toggle("hassb",!!U);
+    document.querySelectorAll("#nv a").forEach(a=>{const l=a.querySelector(".nl");if(l)a.title=l.textContent});
+    document.querySelectorAll(".sb .me button").forEach(x=>{const t=x.textContent.replace(/^[^\p{L}]+/u,"").trim();if(ico[t]){x.dataset.i=ico[t];x.title=t}})};
+  const _d=draw;draw=function(){const r=_d.apply(this,arguments);try{after()}catch(e){}return r};
+  after();
+})();
 </script>
 <script src="sync.js?v=3"></script>
 </body></html>
